@@ -1,0 +1,822 @@
+--Drop Sequences
+DROP SEQUENCE officer_seq;
+DROP SEQUENCE person_seq; 
+DROP SEQUENCE incident_seq; 
+DROP SEQUENCE Citation_seq; 
+DROP SEQUENCE vehicle_seq; 
+DROP SEQUENCE involved_vic_seq;
+DROP SEQUENCE participant_seq;
+DROP SEQUENCE responder_seq;
+DROP SEQUENCE address_seq;
+DROP SEQUENCE Status_Change_seq;
+
+--DROP TABLES
+DROP TABLE Status_Change;
+DROP TABLE Cite_fee;
+DROP TABLE Cite_Warning;
+DROP TABLE Cite_Criminal;
+DROP TABLE Citation;
+DROP TABLE Caller;
+DROP TABLE Victim;
+DROP TABLE Offender;
+DROP TABLE Witness;
+DROP TABLE Participant;
+DROP TABLE Responder;
+DROP TABLE Involved_vic;
+DROP TABLE Vehicle;
+DROP TABLE Incident;
+DROP TABLE Person;
+DROP TABLE Address;
+DROP TABLE Officer;
+
+--TABLES
+CREATE TABLE Officer (
+Officer_ID DECIMAL(12) PRIMARY KEY,
+Supervisor_id DECIMAL(12),
+Badge_id DECIMAL(12) NOT NULL,
+Off_First_Name VARCHAR(255) NOT NULL,
+Off_Last_Name VARCHAR(255) NOT NULL,
+Off_Rank VARCHAR(10) NOT NULL,
+Off_Position VARCHAR(20),
+CONSTRAINT Off_Supervisor_id_fk FOREIGN KEY (supervisor_id) REFERENCES officer(officer_id));
+
+CREATE TABLE Address (
+Address_id DECIMAL(12) PRIMARY KEY,
+Address_Number VARCHAR(20) NOT NULL,
+Address_Street VARCHAR(64) NOT NULL,
+Address_Town VARCHAR(64) NOT NULL,
+Address_State VARCHAR(64) NOT NULL,
+Address_Zip DECIMAL(6) NOT NULL);
+
+CREATE TABLE Person (
+Person_ID DECIMAL(12) PRIMARY KEY,
+Per_SSN DECIMAL(10),
+Per_OLN VARCHAR(20),
+Address_id DECIMAL(12), 
+Per_First_Name VARCHAR(255) NOT NULL,
+Per_Last_Name VARCHAR(255) NOT NULL,
+Per_DOB DATE NOT NULL,
+Per_phone DECIMAL(10),
+CONSTRAINT Person_Address_Id_fk FOREIGN KEY (Address_Id) REFERENCES Address(Address_id));
+
+CREATE TABLE Incident (
+Incident_id DECIMAL(12) PRIMARY KEY,
+Officer_id DECIMAL (12) NOT NULL,
+Address_id DECIMAL (12) NOT NULL,
+Inc_Status VARCHAR(15) NOT NULL,
+Inc_Reported VARCHAR(15) NOT NULL,
+Inc_Date_Time DATE NOT NULL,
+Inc_Category VARCHAR(40) NOT NULL,
+Inc_Action VARCHAR (255) NOT NULL,
+CONSTRAINT Incident_Address_Id_fk FOREIGN KEY (Address_id) REFERENCES Address(Address_id),
+CONSTRAINT Incident_Officer_Id_fk FOREIGN KEY (Officer_id) REFERENCES officer(officer_id));
+
+CREATE TABLE Vehicle (
+Vehicle_id DECIMAL(12) PRIMARY KEY,
+Person_ID DECIMAL(12) NOT NULL,
+Veh_reg VARCHAR (10) NOT NULL,
+Veh_VIN VARCHAR(10) NOT NULL,
+Veh_Make VARCHAR (64) NOT NULL,
+Veh_Model VARCHAR(64) NOT NULL,
+Veh_year DECIMAL (4) NOT NULL,
+Veh_Color VARCHAR(25) NOT NULL,
+CONSTRAINT Vehicle_Person_Id_fk FOREIGN KEY (Person_id) REFERENCES Person(Person_id));
+
+CREATE TABLE Involved_vic (
+Involved_vic_id DECIMAL(12) PRIMARY KEY,
+Vehicle_id DECIMAL (12) NOT NULL,
+Incident_id DECIMAL(12) NOT NULL,
+CONSTRAINT invovled_vic_vehicle_Id_fk FOREIGN KEY (Vehicle_id) REFERENCES Vehicle(Vehicle_id),
+CONSTRAINT Involved_vic_Incident_Id_fk FOREIGN KEY (Incident_id) REFERENCES Incident(Incident_id));
+
+CREATE TABLE Responder (
+Responder_id DECIMAL(12) PRIMARY KEY,
+Officer_id DECIMAL (12) NOT NULL,
+Incident_id DECIMAL(12) NOT NULL,
+CONSTRAINT Responder_Incident_Id_fk FOREIGN KEY (Incident_id) REFERENCES Incident(Incident_id),
+CONSTRAINT Responder_Officer_Id_fk FOREIGN KEY (Officer_id) REFERENCES officer(officer_id));
+
+CREATE TABLE Participant (
+Participant_id DECIMAL (12) PRIMARY KEY,
+Incident_id DECIMAL(12),
+Person_id DECIMAL(12),
+is_caller_flag CHAR(1),
+is_witness_flag CHAR(1),
+is_offender_flag CHAR(1),
+is_victim_flag CHAR(1),
+CONSTRAINT Participant_Person_Id_fk FOREIGN KEY (Person_id) REFERENCES Person(Person_id),
+CONSTRAINT Participant_Incident_Id_fk FOREIGN KEY (Incident_id) REFERENCES incident(incident_id));
+
+CREATE TABLE Witness (
+Participant_id DECIMAL (12) PRIMARY KEY,
+Witness_Statement CHAR(1) NOT NULL,
+CONSTRAINT Witness_Participant_id_fk FOREIGN KEY (participant_id) REFERENCES Participant(participant_id));
+
+CREATE TABLE Caller (
+Participant_id DECIMAL (12) PRIMARY KEY,
+Caller_method VARCHAR(64) NOT NULL,
+Caller_time VARCHAR (6) NOT NULL,
+CONSTRAINT Caller_Participant_id_fk FOREIGN KEY (participant_id) REFERENCES Participant(participant_id));
+
+CREATE TABLE Offender (
+Participant_id DECIMAL (12) PRIMARY KEY,
+Offender_Arrested CHAR(1) NOT NULL,
+Offender_arrest_date DATE,
+CONSTRAINT Offender_Participant_id_fk FOREIGN KEY (participant_id) REFERENCES Participant(participant_id));
+
+CREATE TABLE Victim (
+Participant_id DECIMAL (12) PRIMARY KEY,
+Victim_to_offender CHAR(20) NOT NULL,
+CONSTRAINT Victim_Participant_id_fk FOREIGN KEY (participant_id) REFERENCES Participant(participant_id));
+
+CREATE TABLE Citation (
+Cite_ID DECIMAL(12) PRIMARY KEY,
+Officer_id DECIMAL(12) NOT NULL,
+Vehicle_id DECIMAL(12) NOT NULL,
+Person_id DECIMAL(12) NOT NULL,
+Incident_id DECIMAL(12) NOT NULL,
+Cite_num VARCHAR(32) NOT NULL,
+Cite_type CHAR(1) NOT NULL,
+Cite_Date_time DATE NOT NULL,
+Cite_Offense VARCHAR(25),
+CONSTRAINT Citation_Officer_id_fk FOREIGN KEY (Officer_id) REFERENCES officer(officer_id),
+CONSTRAINT Citation_Person_id_fk FOREIGN KEY (Person_id) REFERENCES Person(Person_id),
+CONSTRAINT Citation_Vehicle_id_fk FOREIGN KEY (Vehicle_id) REFERENCES Vehicle(Vehicle_id),
+CONSTRAINT Citation_Incident_id_fk FOREIGN KEY (Incident_id) REFERENCES Incident(Incident_id));
+
+CREATE TABLE Cite_warning (
+cite_id DECIMAL(12) PRIMARY KEY,
+CONSTRAINT cite_warning_cite_id_fk FOREIGN KEY (cite_id) REFERENCES citation(cite_id));
+
+CREATE TABLE Cite_fee (
+cite_id DECIMAL(12) PRIMARY KEY,
+cite_amount DECIMAL(4),
+CONSTRAINT cite_fee_cite_id_fk FOREIGN KEY (cite_id) REFERENCES citation(cite_id));
+
+CREATE TABLE Cite_criminal (
+cite_id DECIMAL(12) PRIMARY KEY,
+Cite_Status VARCHAR(25),
+CONSTRAINT cite_criminal_cite_id_fk FOREIGN KEY (cite_id) REFERENCES citation(cite_id));
+
+CREATE TABLE Status_Change (
+Status_Change_ID DECIMAL(12) PRIMARY KEY,
+Cite_ID DECIMAL(12),
+Old_Status VARCHAR(25),
+New_Status VARCHAR(25),
+Change_Date DATE,
+CONSTRAINT Status_Change_cite_id_FK FOREIGN KEY (Cite_id) REFERENCES Citation(cite_id));
+
+--SEQUENCES
+CREATE SEQUENCE officer_seq START WITH 1;
+CREATE SEQUENCE person_seq START WITH 1;
+CREATE SEQUENCE incident_seq START WITH 1;
+CREATE SEQUENCE Citation_seq START WITH 1;
+CREATE SEQUENCE vehicle_seq START WITH 1;
+CREATE SEQUENCE involved_vic_seq START WITH 1;
+CREATE SEQUENCE participant_seq START WITH 1;
+CREATE SEQUENCE responder_seq START WITH 1;
+CREATE SEQUENCE address_seq START WITH 1;
+CREATE SEQUENCE Status_Change_seq START WITH 1;
+
+--INDEXES 
+CREATE INDEX Person_address_id_idx
+ON Person(address_id);
+CREATE INDEX incident_address_id_idx
+ON incident(address_id);
+CREATE INDEX incident_officer_id_idx
+ON incident(officer_id);
+CREATE INDEX involved_vic_incident_id_idx
+ON involved_vic(incident_id);
+CREATE INDEX involved_vic_vehicle_id_idx
+ON involved_vic(vehicle_id);
+CREATE INDEX responder_incident_id_idx
+ON responder(incident_id);
+CREATE INDEX responder_officer_id_idx
+ON responder(officer_id);
+CREATE INDEX participant_person_id_idx
+ON participant(person_id);
+CREATE INDEX participant_incident_id_idx
+ON participant(incident_id);
+CREATE INDEX citation_officer_id_idx
+ON citation(officer_id);
+CREATE INDEX citation_vehicle_id_idx
+ON citation(vehicle_id);
+CREATE INDEX citation_incident_id_idx
+ON citation(incident_id);
+CREATE INDEX citation_person_id_idx
+ON citation(person_id);
+CREATE INDEX incident_inc_date_time_idx
+ON Incident(inc_date_time);
+CREATE INDEX incident_inc_category_idx
+ON Incident(inc_category);
+CREATE INDEX citation_cite_type_idx
+ON citation(cite_type);
+CREATE INDEX offender_arrest_date_idx
+ON offender(offender_arrest_date);
+
+--STORED PROCEDURES
+CREATE OR REPLACE PROCEDURE add_address (
+    add_number VARCHAR,
+    add_street VARCHAR,
+    add_town VARCHAR,
+    add_state VARCHAR,
+    add_zip DECIMAL)
+IS
+BEGIN 
+    INSERT INTO Address (address_id, address_number, address_street, address_town, address_state, address_zip)
+    VALUES (address_seq.nextval, add_number, add_street, add_town, add_state, add_zip);
+END;
+/
+
+CREATE OR REPLACE PROCEDURE add_person (
+    P_ssn DECIMAL,
+    p_OLN VARCHAR,
+    p_first_name VARCHAR,
+    p_last_name VARCHAR,
+    p_DOB DATE,
+    P_phone DECIMAL,
+    add_number VARCHAR,
+    add_street VARCHAR,
+    add_town VARCHAR,
+    add_state VARCHAR,
+    add_zip DECIMAL)
+IS
+    Person_address_id_number DECIMAL(12);
+    Person_address_id DECIMAL(12);
+BEGIN 
+    SELECT count(address_id)
+    INTO Person_address_id_number
+    FROM address
+    WHERE address_number = add_number AND address_street = add_street AND address_zip = add_zip;
+    
+    IF Person_address_id_number = 0 THEN
+    INSERT INTO Address (address_id, address_number, address_street, address_town, address_state, address_zip)
+    VALUES (address_seq.nextval, add_number, add_street, add_town, add_state, add_zip);
+    END IF;
+    
+    SELECT address_id
+    INTO Person_address_id
+    FROM address
+    WHERE address_number = add_number AND address_street = add_street AND address_zip = add_zip;
+    
+    INSERT INTO Person (person_id, address_id, per_SSN, per_oln, per_first_name, per_last_name, per_DOB, per_phone)
+    VALUES (person_seq.nextval, person_address_id, p_ssn, p_oln, p_first_name, p_last_name, p_DOB, p_phone);
+END;
+/
+
+CREATE OR REPLACE PROCEDURE add_officer (
+    O_Badge_id DECIMAL,
+    O_First_Name VARCHAR,
+    O_Last_Name VARCHAR,
+    O_Rank VARCHAR,
+    O_Position VARCHAR,
+    s_badge_id DECIMAL)
+IS
+    off_super_id DECIMAL(12);
+BEGIN 
+    SELECT officer_id
+    INTO off_super_id
+    FROM officer
+    WHERE s_badge_id = badge_id;
+   
+    INSERT INTO Officer (Officer_ID, Supervisor_id, Badge_id, Off_First_Name, Off_Last_Name, Off_Rank, Off_Position)
+    VALUES (officer_seq.nextval, off_super_id, o_Badge_id, o_First_Name, O_Last_Name, O_Rank, O_Position);
+END;
+/
+
+--Triggers:
+CREATE OR REPLACE TRIGGER person_DOB_trg
+BEFORE UPDATE OR INSERT ON person
+FOR EACH ROW
+BEGIN
+    IF :NEW.per_DOB < CAST( '1-JAN-1900' AS DATE) THEN
+    RAISE_APPLICATION_ERROR(-20001, 'The date of birth must be after January 1, 1900');
+    END IF;
+END;
+/
+
+CREATE OR REPLACE TRIGGER person_SSN_trg
+BEFORE UPDATE OR INSERT ON person
+FOR EACH ROW
+BEGIN
+    IF (LENGTH(:NEW.per_SSN) <> 10) THEN
+    RAISE_APPLICATION_ERROR(-20001, 'The Social Security number must be 10 digits');
+    END IF;
+END;
+/
+
+CREATE OR REPLACE TRIGGER person_phone_trg
+BEFORE UPDATE OR INSERT ON person
+FOR EACH ROW
+BEGIN
+    IF (LENGTH(:NEW.per_phone) <> 10) THEN
+    RAISE_APPLICATION_ERROR(-20001, 'The phone number must be 10 digits');
+    END IF;
+END;
+/
+
+CREATE OR REPLACE TRIGGER address_Zip_trg
+BEFORE UPDATE OR INSERT ON Address
+FOR EACH ROW
+BEGIN
+    IF (LENGTH(:NEW.address_zip) <> 5) THEN
+    RAISE_APPLICATION_ERROR(-20001, 'The Address Zip Code must be 5 digits.');
+    END IF;
+END;
+/
+
+CREATE OR REPLACE TRIGGER check_SSN_redundancy
+BEFORE INSERT OR UPDATE ON Person
+FOR EACH ROW
+DECLARE 
+    person_ssn_number DECIMAL(1);
+BEGIN
+    SELECT COUNT(per_ssn)
+    INTO person_SSN_Number
+    FROM Person
+    WHERE :NEW.per_SSN = person.per_ssn;
+    
+    IF person_SSN_Number > 0 
+    THEN
+       RAISE_APPLICATION_ERROR (-20001, 'This Social Security Number is already in use.');
+    END IF;
+END;
+/
+
+CREATE OR REPLACE TRIGGER Status_Change_trg
+BEFORE UPDATE OF Cite_Status ON Cite_Criminal
+FOR EACH ROW
+BEGIN
+    INSERT INTO Status_Change (Status_Change_ID, Cite_id, Old_Status, New_Status, Change_Date)
+    VALUES (Status_Change_seq.NEXTVAL, :NEW.Cite_id, :OLD.Cite_Status, :New.Cite_Status, trunc(sysdate));
+END;
+/
+
+--INSERTS
+BEGIN
+ADD_ADDRESS (123, 'East Main Street', 'Norton', 'Massachusetts', 12345);
+ADD_ADDRESS (1, 'West Main Street', 'Norton', 'Massachusetts', 12345);
+ADD_ADDRESS (2, 'Leonard Street', 'Norton', 'Massachusetts', 12345);
+ADD_ADDRESS (3, 'Plain Street', 'Norton', 'Massachusetts', 12345);
+ADD_ADDRESS (5, 'Burt', 'Norton', 'Massachusetts', 12345);
+ADD_ADDRESS (10, 'Newland Street', 'Norton', 'Massachusetts', 12345);
+ADD_ADDRESS (11, 'Wilbur Street', 'Norton', 'Massachusetts', 12345);
+ADD_ADDRESS (22, 'Bay Road', 'Norton', 'Massachusetts', 12345);
+ADD_ADDRESS (5, 'Johnson Street', 'Norton', 'Massachusetts', 12345);
+ADD_ADDRESS (7, 'Tipping Place', 'Norton', 'Massachusetts', 12345);
+END;
+/
+
+BEGIN
+ADD_Person (1111111110, 'S12345678', 'John', 'Smith', CAST('1-JAN-1980' AS DATE),
+5082341234, 123, 'East Main Street', 'Norton', 'Massachusetts', '12345');
+ADD_Person (1234567890, 'S12225678', 'Helen', 'Smith', CAST('1-MAR-1982' AS DATE),
+5085557634, 1, 'West Main Street', 'Norton', 'Massachusetts', 12345);
+ADD_Person (1117771110, null, 'Grace', 'Smith', CAST('11-JAN-2000' AS DATE),
+5085575434, 2, 'Leonard Street', 'Norton', 'Massachusetts', 12345);
+ADD_Person (1114444110, 'S16665678', 'Keith', 'Michaels', CAST('1-DEC-2000' AS DATE),
+5085445234, 3, 'Plain Street', 'Norton', 'Massachusetts', 12345);
+ADD_Person (1133331110, 'S12344478', 'Robert', 'Jones', CAST('4-NOV-2000' AS DATE),
+5085976234, 5, 'Burt', 'Norton', 'Massachusetts', 12345);
+ADD_Person (1122221110, 'S12377778', 'Mary', 'Cota', CAST('17-JUN-2000' AS DATE),
+5085557774, 10, 'Newland Street', 'Norton', 'Massachusetts', 12345);
+ADD_Person (1999911110, 'S17775678', 'Jake', 'Boxer', CAST('4-MAY-2000' AS DATE),
+5085544664, 11, 'Wilbur Street', 'Norton', 'Massachusetts', 12345);
+ADD_Person (1994444110, 'S15785678', 'Thomas', 'Brigg', CAST('22-AUG-2000' AS DATE),
+5085235334, 22, 'Bay Road', 'Norton', 'Massachusetts', 12345);
+ADD_Person (1223911110, 'S12777678', 'Larry', 'Summers', CAST('11-JUL-2000' AS DATE),
+5085523434, 5, 'Johnson Street', 'Norton', 'Massachusetts', 12345);
+ADD_Person (1666661110, 'S14776678', 'John', 'Hail', CAST('21-JAN-2000' AS DATE),
+5081551234, 7, 'Tipping Place', 'Norton', 'Massachusetts', 12345);
+END;
+/
+
+INSERT INTO officer 
+VALUES (officer_seq.nextval, null, 134, 'Sean', 'Worrall', 'Chief', 'Administration');
+
+BEGIN
+Add_Officer (133, 'Michael', 'Jacobs', 'Lieutenant', 'Patrol', 134);
+Add_Officer (123, 'Jake', 'Johnson', 'Sergeant', 'Patrol', 133);
+Add_Officer (333, 'Patrick', 'Booher', 'Patrolman', 'Patrol', 123);
+Add_Officer (130, 'Robert', 'Goodwin', 'Patrolman', 'Patrol', 123);
+Add_Officer (143, 'Ashley', 'Kennedy', 'Patrolman', 'Patrol', 123);
+Add_Officer (190, 'Brian', 'Clark', 'Sergeant', 'Dectective', 134);
+Add_Officer (173, 'Nancy', 'Leeland', 'Patrolman', 'Dectective', 190);
+Add_Officer (564, 'James', 'Murphy', 'Sergeant', 'Patrol', 134);
+Add_Officer (195, 'Janna', 'Perez', 'Patolman', 'Patrol', 564);
+END;
+/
+
+INSERT INTO Incident (Incident_id, Officer_id, Address_id, Inc_Status, Inc_Reported, Inc_Date_Time, Inc_Category, Inc_Action)
+VALUES (Incident_seq.NEXTVAL, (SELECT Officer_id FROM Officer WHERE Badge_id = 130), (SELECT address_id FROM address WHERE address_number = 123 AND address_street = 'East Main Street'), 'Closed', '911', 
+CAST('12-JUL-2020' AS DATE), '911 Hang Up', 'Confirmed');
+INSERT INTO Incident (Incident_id, Officer_id, Address_id, Inc_Status, Inc_Reported, Inc_Date_Time, Inc_Category, Inc_Action)
+VALUES (Incident_seq.NEXTVAL, (SELECT Officer_id FROM Officer WHERE Badge_id = 333), (SELECT address_id FROM address WHERE address_number = 3 AND address_street = 'Plain Street'), 'Closed', '911', 
+CAST('12-JUL-2020' AS DATE), 'M/V Stop', 'Citation Issued');
+INSERT INTO Incident (Incident_id, Officer_id, Address_id, Inc_Status, Inc_Reported, Inc_Date_Time, Inc_Category, Inc_Action)
+VALUES (Incident_seq.NEXTVAL, (SELECT Officer_id FROM Officer WHERE Badge_id = 195), (SELECT address_id FROM address WHERE address_number = 10 AND address_street = 'Newland Street'), 'Closed', '911', 
+CAST('12-JUL-2020' AS DATE), 'M/V Stop', 'Criminal Application');
+INSERT INTO Incident (Incident_id, Officer_id, Address_id, Inc_Status, Inc_Reported, Inc_Date_Time, Inc_Category, Inc_Action)
+VALUES (Incident_seq.NEXTVAL, (SELECT Officer_id FROM Officer WHERE Badge_id = 173), (SELECT address_id FROM address WHERE address_number = 11 AND address_street = 'Wilbur Street'), 'Closed', '911', 
+CAST('13-JUL-2020' AS DATE), 'M/V Stop', 'Verbal Warning');
+INSERT INTO Incident (Incident_id, Officer_id, Address_id, Inc_Status, Inc_Reported, Inc_Date_Time, Inc_Category, Inc_Action)
+VALUES (Incident_seq.NEXTVAL, (SELECT Officer_id FROM Officer WHERE Badge_id = 143), (SELECT address_id FROM address WHERE address_number = 5 AND address_street = 'Johnson Street'), 'Closed', '911', 
+CAST('13-JUL-2020' AS DATE), 'Assist Citizen', 'Services Rendered');
+INSERT INTO Incident (Incident_id, Officer_id, Address_id, Inc_Status, Inc_Reported, Inc_Date_Time, Inc_Category, Inc_Action)
+VALUES (Incident_seq.NEXTVAL, (SELECT Officer_id FROM Officer WHERE Badge_id = 130), (SELECT address_id FROM address WHERE address_number = 10 AND address_street = 'Newland Street'), 'Closed', '911', 
+CAST('13-JUL-2020' AS DATE), 'M/V Stop', 'Citation Issued');
+INSERT INTO Incident (Incident_id, Officer_id, Address_id, Inc_Status, Inc_Reported, Inc_Date_Time, Inc_Category, Inc_Action)
+VALUES (Incident_seq.NEXTVAL, (SELECT Officer_id FROM Officer WHERE Badge_id = 195), (SELECT address_id FROM address WHERE address_number = 3 AND address_street = 'Plain Street'), 'Closed', '911', 
+CAST('14-JUL-2020' AS DATE), 'Assist Citizen', 'Services Rendered');
+INSERT INTO Incident (Incident_id, Officer_id, Address_id, Inc_Status, Inc_Reported, Inc_Date_Time, Inc_Category, Inc_Action)
+VALUES (Incident_seq.NEXTVAL, (SELECT Officer_id FROM Officer WHERE Badge_id = 123), (SELECT address_id FROM address WHERE address_number = 1 AND address_street = 'West Main Street'), 'Closed', '911', 
+CAST('14-JUL-2020' AS DATE), '911 Hang Up', 'Confirmed');
+INSERT INTO Incident (Incident_id, Officer_id, Address_id, Inc_Status, Inc_Reported, Inc_Date_Time, Inc_Category, Inc_Action)
+VALUES (Incident_seq.NEXTVAL, (SELECT Officer_id FROM Officer WHERE Badge_id = 564), (SELECT address_id FROM address WHERE address_number = 7 AND address_street = 'Tipping Place'), 'Closed', '911', 
+CAST('14-JUL-2020' AS DATE), 'Domestic Disturbance', 'Peace Restored');
+INSERT INTO Incident (Incident_id, Officer_id, Address_id, Inc_Status, Inc_Reported, Inc_Date_Time, Inc_Category, Inc_Action)
+VALUES (Incident_seq.NEXTVAL, (SELECT Officer_id FROM Officer WHERE Badge_id = 195), (SELECT address_id FROM address WHERE address_number = 1 AND address_street = 'West Main Street'), 'Open', '911', 
+CAST('11-MAY-2020' AS DATE), 'Breaking and Entering', 'Under Investigation');
+INSERT INTO Incident (Incident_id, Officer_id, Address_id, Inc_Status, Inc_Reported, Inc_Date_Time, Inc_Category, Inc_Action)
+VALUES (Incident_seq.NEXTVAL, (SELECT Officer_id FROM Officer WHERE Badge_id = 564), (SELECT address_id FROM address WHERE address_number = 1 AND address_street = 'West Main Street'), 'Open', 'OUI', 
+CAST('12-MAY-2020' AS DATE), 'OUI Crash', 'Roadway open');
+INSERT INTO Incident (Incident_id, Officer_id, Address_id, Inc_Status, Inc_Reported, Inc_Date_Time, Inc_Category, Inc_Action)
+VALUES (Incident_seq.NEXTVAL, (SELECT Officer_id FROM Officer WHERE Badge_id = 195), (SELECT address_id FROM address WHERE address_number = 3 AND address_street = 'Plain Street'), 'Closed', '911', 
+CAST('17-JUL-2020' AS DATE), 'Domestic Disturbance', 'Peace Restored');
+INSERT INTO Incident (Incident_id, Officer_id, Address_id, Inc_Status, Inc_Reported, Inc_Date_Time, Inc_Category, Inc_Action)
+VALUES (Incident_seq.NEXTVAL, (SELECT Officer_id FROM Officer WHERE Badge_id = 123), (SELECT address_id FROM address WHERE address_number = 11 AND address_street = 'Wilbur Street'), 'Closed', '911', 
+CAST('12-JUL-2020' AS DATE), 'M/V Stop', 'Criminal Application');
+INSERT INTO Incident (Incident_id, Officer_id, Address_id, Inc_Status, Inc_Reported, Inc_Date_Time, Inc_Category, Inc_Action)
+VALUES (Incident_seq.NEXTVAL, (SELECT Officer_id FROM Officer WHERE Badge_id = 564), (SELECT address_id FROM address WHERE address_number = 11 AND address_street = 'Wilbur Street'), 'Closed', '911', 
+CAST('21-JUL-2020' AS DATE), 'Domestic Disturbance', 'Peace Restored');
+INSERT INTO Incident (Incident_id, Officer_id, Address_id, Inc_Status, Inc_Reported, Inc_Date_Time, Inc_Category, Inc_Action)
+VALUES (Incident_seq.NEXTVAL, (SELECT Officer_id FROM Officer WHERE Badge_id = 123), (SELECT address_id FROM address WHERE address_number = 3 AND address_street = 'Plain Street'), 'Closed', '911', 
+CAST('21-JUL-2020' AS DATE), 'Domestic Disturbance', 'Peace Restored');
+INSERT INTO Incident (Incident_id, Officer_id, Address_id, Inc_Status, Inc_Reported, Inc_Date_Time, Inc_Category, Inc_Action)
+VALUES (Incident_seq.NEXTVAL, (SELECT Officer_id FROM Officer WHERE Badge_id = 564), (SELECT address_id FROM address WHERE address_number = 11 AND address_street = 'Wilbur Street'), 'Closed', '911', 
+CAST('15-JUL-2020' AS DATE), 'Domestic Disturbance', 'Peace Restored');
+INSERT INTO Incident (Incident_id, Officer_id, Address_id, Inc_Status, Inc_Reported, Inc_Date_Time, Inc_Category, Inc_Action)
+VALUES (Incident_seq.NEXTVAL, (SELECT Officer_id FROM Officer WHERE Badge_id = 564), (SELECT address_id FROM address WHERE address_number = 11 AND address_street = 'Wilbur Street'), 'Closed', '911', 
+CAST('10-JUL-2020' AS DATE), 'Breaking and Entering', 'Arrest Made');
+INSERT INTO Incident (Incident_id, Officer_id, Address_id, Inc_Status, Inc_Reported, Inc_Date_Time, Inc_Category, Inc_Action)
+VALUES (Incident_seq.NEXTVAL, (SELECT Officer_id FROM Officer WHERE Badge_id = 564), (SELECT address_id FROM address WHERE address_number = 11 AND address_street = 'Wilbur Street'), 'Closed', '911', 
+CAST('17-JUL-2020' AS DATE), 'Shoplifting', 'Arrest Made');
+INSERT INTO Incident (Incident_id, Officer_id, Address_id, Inc_Status, Inc_Reported, Inc_Date_Time, Inc_Category, Inc_Action)
+VALUES (Incident_seq.NEXTVAL, (SELECT Officer_id FROM Officer WHERE Badge_id = 564), (SELECT address_id FROM address WHERE address_number = 11 AND address_street = 'Wilbur Street'), 'Closed', '911', 
+CAST('12-JUL-2020' AS DATE), 'Assault and Battery', 'Arrest Made');
+INSERT INTO Incident (Incident_id, Officer_id, Address_id, Inc_Status, Inc_Reported, Inc_Date_Time, Inc_Category, Inc_Action)
+VALUES (Incident_seq.NEXTVAL, (SELECT Officer_id FROM Officer WHERE Badge_id = 123), (SELECT address_id FROM address WHERE address_number = 1 AND address_street = 'West Main Street'), 'Closed', '911', 
+CAST('12-JUL-2020' AS DATE), 'Breaking and Entering', 'Arrest Made');
+INSERT INTO Incident (Incident_id, Officer_id, Address_id, Inc_Status, Inc_Reported, Inc_Date_Time, Inc_Category, Inc_Action)
+VALUES (Incident_seq.NEXTVAL, (SELECT Officer_id FROM Officer WHERE Badge_id = 564), (SELECT address_id FROM address WHERE address_number = 123 AND address_street = 'East Main Street'), 'Closed', '911', 
+CAST('17-JUL-2020' AS DATE), 'Shoplifiting', 'Arrest Made');
+INSERT INTO Incident (Incident_id, Officer_id, Address_id, Inc_Status, Inc_Reported, Inc_Date_Time, Inc_Category, Inc_Action)
+VALUES (Incident_seq.NEXTVAL, (SELECT Officer_id FROM Officer WHERE Badge_id = 123), (SELECT address_id FROM address WHERE address_number = 11 AND address_street = 'Wilbur Street'), 'Closed', '911', 
+CAST('13-JUL-2020' AS DATE), 'M/V Stop', 'Criminal Application');
+INSERT INTO Incident (Incident_id, Officer_id, Address_id, Inc_Status, Inc_Reported, Inc_Date_Time, Inc_Category, Inc_Action)
+VALUES (Incident_seq.NEXTVAL, (SELECT Officer_id FROM Officer WHERE Badge_id = 195), (SELECT address_id FROM address WHERE address_number = 1 AND address_street = 'West Main Street'), 'Closed', '911', 
+CAST('14-JUL-2020' AS DATE), 'M/V Stop', 'Criminal Application');
+
+INSERT INTO Vehicle (Vehicle_id, Person_ID, Veh_reg, Veh_VIN, Veh_Make, Veh_Model, Veh_year, Veh_Color) 
+VALUES (Vehicle_seq.NEXTVAL, (SELECT Person_id FROM Person WHERE per_SSN = 1666661110), 'HM7689', 'LOI987GHTY', 'Toyota', 'Prius', 2015, 'Blue');
+INSERT INTO Vehicle (Vehicle_id, Person_ID, Veh_reg, Veh_VIN, Veh_Make, Veh_Model, Veh_year, Veh_Color) 
+VALUES (Vehicle_seq.NEXTVAL, (SELECT Person_id FROM Person WHERE per_SSN = 1666661110), 'HK9689', 'MNH786GTYU', 'Toyota', 'Highlander', 2018, 'Blue');
+INSERT INTO Vehicle (Vehicle_id, Person_ID, Veh_reg, Veh_VIN, Veh_Make, Veh_Model, Veh_year, Veh_Color) 
+VALUES (Vehicle_seq.NEXTVAL, (SELECT Person_id FROM Person WHERE per_SSN = 1994444110), 'KM7689', 'MVT7865GTY', 'Toyota', 'Prius', 2015, 'Blue');
+INSERT INTO Vehicle (Vehicle_id, Person_ID, Veh_reg, Veh_VIN, Veh_Make, Veh_Model, Veh_year, Veh_Color) 
+VALUES (Vehicle_seq.NEXTVAL, (SELECT Person_id FROM Person WHERE per_SSN = 1994444110), 'BZ7089', 'KJH7895FRM', 'FORD', 'F150', 2018, 'Blue');
+INSERT INTO Vehicle (Vehicle_id, Person_ID, Veh_reg, Veh_VIN, Veh_Make, Veh_Model, Veh_year, Veh_Color) 
+VALUES (Vehicle_seq.NEXTVAL, (SELECT Person_id FROM Person WHERE per_SSN = 1223911110), 'BB7089', '98MN765GHJ', 'Toyota', 'Prius', 2012, 'Blue');
+INSERT INTO Vehicle (Vehicle_id, Person_ID, Veh_reg, Veh_VIN, Veh_Make, Veh_Model, Veh_year, Veh_Color) 
+VALUES (Vehicle_seq.NEXTVAL, (SELECT Person_id FROM Person WHERE per_SSN = 1223911110), 'BZ7074', 'ASDE4321KM', 'Toyota', 'RAV4', 2018, 'Black');
+INSERT INTO Vehicle (Vehicle_id, Person_ID, Veh_reg, Veh_VIN, Veh_Make, Veh_Model, Veh_year, Veh_Color) 
+VALUES (Vehicle_seq.NEXTVAL, (SELECT Person_id FROM Person WHERE per_SSN = 1111111110), 'VZ2089', '087HMNJ543', 'Ford', 'Escape', 2015, 'Green');
+INSERT INTO Vehicle (Vehicle_id, Person_ID, Veh_reg, Veh_VIN, Veh_Make, Veh_Model, Veh_year, Veh_Color) 
+VALUES (Vehicle_seq.NEXTVAL, (SELECT Person_id FROM Person WHERE per_SSN = 1111111110), 'MN9009', 'ASDR567BNM', 'Toyota', 'Highlander', 2018, 'Yellow');
+INSERT INTO Vehicle (Vehicle_id, Person_ID, Veh_reg, Veh_VIN, Veh_Make, Veh_Model, Veh_year, Veh_Color) 
+VALUES (Vehicle_seq.NEXTVAL, (SELECT Person_id FROM Person WHERE per_SSN = 1114444110), 'KWL089', 'HJK976BNM8', 'Toyota', 'Prius', 2019, 'Blue');
+INSERT INTO Vehicle (Vehicle_id, Person_ID, Veh_reg, Veh_VIN, Veh_Make, Veh_Model, Veh_year, Veh_Color) 
+VALUES (Vehicle_seq.NEXTVAL, (SELECT Person_id FROM Person WHERE per_SSN = 1114444110), 'BA708L', 'QUA897BNM9', 'Ford', 'F150', 2020, 'Blue');
+
+INSERT INTO Involved_vic (Involved_vic_id, Vehicle_id, Incident_id) 
+VALUES (Involved_Vic_seq.NEXTVAL, (SELECT vehicle_id FROM Vehicle WHERE Veh_Vin = 'LOI987GHTY'), 2);
+INSERT INTO Involved_vic (Involved_vic_id, Vehicle_id, Incident_id) 
+VALUES (Involved_Vic_seq.NEXTVAL, (SELECT vehicle_id FROM Vehicle WHERE Veh_Vin = 'MNH786GTYU'), 3);
+INSERT INTO Involved_vic (Involved_vic_id, Vehicle_id, Incident_id) 
+VALUES (Involved_Vic_seq.NEXTVAL, (SELECT vehicle_id FROM Vehicle WHERE Veh_Vin = 'MVT7865GTY'), 4);
+INSERT INTO Involved_vic (Involved_vic_id, Vehicle_id, Incident_id) 
+VALUES (Involved_Vic_seq.NEXTVAL, (SELECT vehicle_id FROM Vehicle WHERE Veh_Vin = 'KJH7895FRM'), 6);
+INSERT INTO Involved_vic (Involved_vic_id, Vehicle_id, Incident_id) 
+VALUES (Involved_Vic_seq.NEXTVAL, (SELECT vehicle_id FROM Vehicle WHERE Veh_Vin = '98MN765GHJ'), 7);
+INSERT INTO Involved_vic (Involved_vic_id, Vehicle_id, Incident_id) 
+VALUES (Involved_Vic_seq.NEXTVAL, (SELECT vehicle_id FROM Vehicle WHERE Veh_Vin = '087HMNJ543'), 7);
+INSERT INTO Involved_vic (Involved_vic_id, Vehicle_id, Incident_id) 
+VALUES (Involved_Vic_seq.NEXTVAL, (SELECT vehicle_id FROM Vehicle WHERE Veh_Vin = 'LOI987GHTY'), 8);
+INSERT INTO Involved_vic (Involved_vic_id, Vehicle_id, Incident_id) 
+VALUES (Involved_Vic_seq.NEXTVAL, (SELECT vehicle_id FROM Vehicle WHERE Veh_Vin = 'KJH7895FRM'), 8);
+INSERT INTO Involved_vic (Involved_vic_id, Vehicle_id, Incident_id) 
+VALUES (Involved_Vic_seq.NEXTVAL, (SELECT vehicle_id FROM Vehicle WHERE Veh_Vin = 'MNH786GTYU'), 9);
+INSERT INTO Involved_vic (Involved_vic_id, Vehicle_id, Incident_id) 
+VALUES (Involved_Vic_seq.NEXTVAL, (SELECT vehicle_id FROM Vehicle WHERE Veh_Vin = 'MNH786GTYU'), 10);
+
+
+INSERT INTO Responder (Responder_id, Officer_id, Incident_id)
+VALUES (Responder_seq.NEXTVAL, 10, 1);
+INSERT INTO Responder (Responder_id, Officer_id, Incident_id)
+VALUES (Responder_seq.NEXTVAL, 8, 2);
+INSERT INTO Responder (Responder_id, Officer_id, Incident_id)
+VALUES (Responder_seq.NEXTVAL, 4, 3);
+INSERT INTO Responder (Responder_id, Officer_id, Incident_id)
+VALUES (Responder_seq.NEXTVAL, 5, 4);
+INSERT INTO Responder (Responder_id, Officer_id, Incident_id)
+VALUES (Responder_seq.NEXTVAL, 9, 5);
+INSERT INTO Responder (Responder_id, Officer_id, Incident_id)
+VALUES (Responder_seq.NEXTVAL, 4, 6);
+INSERT INTO Responder (Responder_id, Officer_id, Incident_id)
+VALUES (Responder_seq.NEXTVAL, 6, 7);
+INSERT INTO Responder (Responder_id, Officer_id, Incident_id)
+VALUES (Responder_seq.NEXTVAL, 7, 8);
+INSERT INTO Responder (Responder_id, Officer_id, Incident_id)
+VALUES (Responder_seq.NEXTVAL, 5, 9);
+INSERT INTO Responder (Responder_id, Officer_id, Incident_id)
+VALUES (Responder_seq.NEXTVAL, 5, 9);
+INSERT INTO Responder (Responder_id, Officer_id, Incident_id)
+VALUES (Responder_seq.NEXTVAL, 4, 10);
+INSERT INTO Responder (Responder_id, Officer_id, Incident_id)
+VALUES (Responder_seq.NEXTVAL, 8, 10);
+
+INSERT INTO Participant (Participant_id, Incident_id, Person_id, is_caller_flag, is_witness_flag, is_offender_flag, is_victim_flag) 
+VALUES (participant_seq.NEXTVAL, 1, 1, 'N', 'N', 'Y', 'N');
+INSERT INTO Participant (Participant_id, Incident_id, Person_id, is_caller_flag, is_witness_flag, is_offender_flag, is_victim_flag) 
+VALUES (participant_seq.NEXTVAL, 1, 2, 'Y', 'N', 'N', 'N');
+INSERT INTO Participant (Participant_id, Incident_id, Person_id, is_caller_flag, is_witness_flag, is_offender_flag, is_victim_flag) 
+VALUES (participant_seq.NEXTVAL, 2, 3, 'N', 'N', 'Y', 'N');
+INSERT INTO Participant (Participant_id, Incident_id, Person_id, is_caller_flag, is_witness_flag, is_offender_flag, is_victim_flag) 
+VALUES (participant_seq.NEXTVAL, 3, 1, 'N', 'N', 'Y', 'N');
+INSERT INTO Participant (Participant_id, Incident_id, Person_id, is_caller_flag, is_witness_flag, is_offender_flag, is_victim_flag) 
+VALUES (participant_seq.NEXTVAL, 4, 9, 'N', 'N', 'Y', 'N');
+INSERT INTO Participant (Participant_id, Incident_id, Person_id, is_caller_flag, is_witness_flag, is_offender_flag, is_victim_flag) 
+VALUES (participant_seq.NEXTVAL, 5, 8, 'Y', 'N', 'N', 'Y');
+INSERT INTO Participant (Participant_id, Incident_id, Person_id, is_caller_flag, is_witness_flag, is_offender_flag, is_victim_flag) 
+VALUES (participant_seq.NEXTVAL, 6, 10, 'N', 'N', 'Y', 'N');
+INSERT INTO Participant (Participant_id, Incident_id, Person_id, is_caller_flag, is_witness_flag, is_offender_flag, is_victim_flag) 
+VALUES (participant_seq.NEXTVAL, 7, 1, 'N', 'Y', 'N', 'Y');
+INSERT INTO Participant (Participant_id, Incident_id, Person_id, is_caller_flag, is_witness_flag, is_offender_flag, is_victim_flag) 
+VALUES (participant_seq.NEXTVAL, 7, 2, 'N', 'Y', 'N', 'Y');
+INSERT INTO Participant (Participant_id, Incident_id, Person_id, is_caller_flag, is_witness_flag, is_offender_flag, is_victim_flag) 
+VALUES (participant_seq.NEXTVAL, 7, 3, 'N', 'Y', 'N', 'Y');
+INSERT INTO Participant (Participant_id, Incident_id, Person_id, is_caller_flag, is_witness_flag, is_offender_flag, is_victim_flag) 
+VALUES (participant_seq.NEXTVAL, 8, 5, 'Y', 'N', 'N', 'N');
+INSERT INTO Participant (Participant_id, Incident_id, Person_id, is_caller_flag, is_witness_flag, is_offender_flag, is_victim_flag) 
+VALUES (participant_seq.NEXTVAL, 8, 7, 'N', 'N', 'N', 'N');
+INSERT INTO Participant (Participant_id, Incident_id, Person_id, is_caller_flag, is_witness_flag, is_offender_flag, is_victim_flag) 
+VALUES (participant_seq.NEXTVAL, 10, 1, 'N', 'Y', 'N', 'N');
+INSERT INTO Participant (Participant_id, Incident_id, Person_id, is_caller_flag, is_witness_flag, is_offender_flag, is_victim_flag) 
+VALUES (participant_seq.NEXTVAL, 10, 2, 'N', 'N', 'N', 'Y');
+INSERT INTO Participant (Participant_id, Incident_id, Person_id, is_caller_flag, is_witness_flag, is_offender_flag, is_victim_flag) 
+VALUES (participant_seq.NEXTVAL, 9, 1, 'N', 'N', 'Y', 'N');
+INSERT INTO Participant (Participant_id, Incident_id, Person_id, is_caller_flag, is_witness_flag, is_offender_flag, is_victim_flag) 
+VALUES (participant_seq.NEXTVAL, 9, 2, 'N', 'N', 'N', 'Y');
+INSERT INTO Participant (Participant_id, Incident_id, Person_id, is_caller_flag, is_witness_flag, is_offender_flag, is_victim_flag) 
+VALUES (participant_seq.NEXTVAL, 11, 5, 'N', 'N', 'Y', 'Y');
+INSERT INTO Participant (Participant_id, Incident_id, Person_id, is_caller_flag, is_witness_flag, is_offender_flag, is_victim_flag) 
+VALUES (participant_seq.NEXTVAL, 12, 8, 'N', 'N', 'Y', 'N');
+INSERT INTO Participant (Participant_id, Incident_id, Person_id, is_caller_flag, is_witness_flag, is_offender_flag, is_victim_flag) 
+VALUES (participant_seq.NEXTVAL, 12, 8, 'N', 'N', 'N', 'Y');
+INSERT INTO Participant (Participant_id, Incident_id, Person_id, is_caller_flag, is_witness_flag, is_offender_flag, is_victim_flag) 
+VALUES (participant_seq.NEXTVAL, 14, 4, 'N', 'N', 'Y', 'N');
+INSERT INTO Participant (Participant_id, Incident_id, Person_id, is_caller_flag, is_witness_flag, is_offender_flag, is_victim_flag) 
+VALUES (participant_seq.NEXTVAL, 14, 5, 'N', 'N', 'N', 'Y');
+INSERT INTO Participant (Participant_id, Incident_id, Person_id, is_caller_flag, is_witness_flag, is_offender_flag, is_victim_flag) 
+VALUES (participant_seq.NEXTVAL, 15, 4, 'N', 'N', 'Y', 'N');
+INSERT INTO Participant (Participant_id, Incident_id, Person_id, is_caller_flag, is_witness_flag, is_offender_flag, is_victim_flag) 
+VALUES (participant_seq.NEXTVAL, 15, 5, 'N', 'N', 'N', 'Y');
+INSERT INTO Participant (Participant_id, Incident_id, Person_id, is_caller_flag, is_witness_flag, is_offender_flag, is_victim_flag) 
+VALUES (participant_seq.NEXTVAL, 16, 4, 'N', 'N', 'Y', 'N');
+INSERT INTO Participant (Participant_id, Incident_id, Person_id, is_caller_flag, is_witness_flag, is_offender_flag, is_victim_flag) 
+VALUES (participant_seq.NEXTVAL, 16, 5, 'N', 'N', 'N', 'Y');
+INSERT INTO Participant (Participant_id, Incident_id, Person_id, is_caller_flag, is_witness_flag, is_offender_flag, is_victim_flag) 
+VALUES (participant_seq.NEXTVAL, 17, 4, 'N', 'N', 'Y', 'N');
+INSERT INTO Participant (Participant_id, Incident_id, Person_id, is_caller_flag, is_witness_flag, is_offender_flag, is_victim_flag) 
+VALUES (participant_seq.NEXTVAL, 18, 4, 'N', 'N', 'Y', 'N');
+INSERT INTO Participant (Participant_id, Incident_id, Person_id, is_caller_flag, is_witness_flag, is_offender_flag, is_victim_flag) 
+VALUES (participant_seq.NEXTVAL, 19, 4, 'N', 'N', 'Y', 'N');
+INSERT INTO Participant (Participant_id, Incident_id, Person_id, is_caller_flag, is_witness_flag, is_offender_flag, is_victim_flag) 
+VALUES (participant_seq.NEXTVAL, 20, 4, 'N', 'N', 'Y', 'N');
+
+INSERT INTO Witness (Participant_id, Witness_Statement) 
+VALUES (8, 'N');
+INSERT INTO Witness (Participant_id, Witness_Statement) 
+VALUES (9, 'N');
+INSERT INTO Witness (Participant_id, Witness_Statement) 
+VALUES (10, 'Y');
+INSERT INTO Witness (Participant_id, Witness_Statement) 
+VALUES (13, 'Y');
+
+INSERT INTO Caller (Participant_id, Caller_method, Caller_time) 
+VALUES (2, '911', '22:10');
+INSERT INTO Caller (Participant_id, Caller_method, Caller_time) 
+VALUES (6, '911', '18:10');
+INSERT INTO Caller (Participant_id, Caller_method, Caller_time) 
+VALUES (11, '911', '08:15');
+
+INSERT INTO Offender (Participant_id, Offender_Arrested, Offender_arrest_date) 
+VALUES (1, 'N', null);
+INSERT INTO Offender (Participant_id, Offender_Arrested, Offender_arrest_date) 
+VALUES (2, 'N', null);
+INSERT INTO Offender (Participant_id, Offender_Arrested, Offender_arrest_date) 
+VALUES (3, 'N', null);
+INSERT INTO Offender (Participant_id, Offender_Arrested, Offender_arrest_date) 
+VALUES (4, 'N', null);
+INSERT INTO Offender (Participant_id, Offender_Arrested, Offender_arrest_date) 
+VALUES (5, 'N', null);
+INSERT INTO Offender (Participant_id, Offender_Arrested, Offender_arrest_date) 
+VALUES (15, 'Y', CAST('14-JUL-2020' AS DATE));
+INSERT INTO Offender (Participant_id, Offender_Arrested, Offender_arrest_date) 
+VALUES (17, 'Y', CAST('12-MAY-2020' AS DATE));
+INSERT INTO Offender (Participant_id, Offender_Arrested, Offender_arrest_date) 
+VALUES (18, 'N', CAST('12-MAY-2020' AS DATE));
+INSERT INTO Offender (Participant_id, Offender_Arrested, Offender_arrest_date) 
+VALUES (20, 'Y', CAST('21-JUL-2020' AS DATE));
+INSERT INTO Offender (Participant_id, Offender_Arrested, Offender_arrest_date) 
+VALUES (22, 'Y', CAST('21-JUL-2020' AS DATE));
+INSERT INTO Offender (Participant_id, Offender_Arrested, Offender_arrest_date) 
+VALUES (24, 'Y', CAST('15-JUL-2020' AS DATE));
+INSERT INTO Offender (Participant_id, Offender_Arrested, Offender_arrest_date) 
+VALUES (26, 'Y', CAST('15-JUL-2020' AS DATE));
+INSERT INTO Offender (Participant_id, Offender_Arrested, Offender_arrest_date) 
+VALUES (27, 'Y', CAST('15-JUL-2020' AS DATE));
+INSERT INTO Offender (Participant_id, Offender_Arrested, Offender_arrest_date) 
+VALUES (28, 'Y', CAST('12-JUL-2020' AS DATE));
+INSERT INTO Offender (Participant_id, Offender_Arrested, Offender_arrest_date) 
+VALUES (29, 'Y', CAST('17-JUL-2020' AS DATE));
+
+INSERT INTO Victim (Participant_id, Victim_to_offender) 
+VALUES (6, 'Friend');
+INSERT INTO Victim (Participant_id, Victim_to_offender) 
+VALUES (8, 'NONE');
+INSERT INTO Victim (Participant_id, Victim_to_offender) 
+VALUES (9, 'Cousin');
+INSERT INTO Victim (Participant_id, Victim_to_offender) 
+VALUES (10, 'NONE');
+INSERT INTO Victim (Participant_id, Victim_to_offender) 
+VALUES (16, 'Wife');
+INSERT INTO Victim (Participant_id, Victim_to_offender) 
+VALUES (14, 'NONE');
+INSERT INTO Victim (Participant_id, Victim_to_offender) 
+VALUES (19, 'Father');
+INSERT INTO Victim (Participant_id, Victim_to_offender) 
+VALUES (21, 'Cousin');
+INSERT INTO Victim (Participant_id, Victim_to_offender) 
+VALUES (23, 'Husband');
+INSERT INTO Victim (Participant_id, Victim_to_offender) 
+VALUES (25, 'Wife');
+
+INSERT INTO Citation (Cite_ID, Officer_id, Vehicle_id, Person_id, Incident_id, Cite_num, Cite_type, Cite_Date_time, Cite_Offense) 
+VALUES (Citation_seq.NEXTVAL, 4, 1, 1, 2, 'A87654', 'F', CAST('12-JUL-2020' AS DATE), 'Marked Lanes');
+INSERT INTO Citation (Cite_ID, Officer_id, Vehicle_id, Person_id, Incident_id, Cite_num, Cite_type, Cite_Date_time, Cite_Offense) 
+VALUES (Citation_seq.NEXTVAL, 5, 2, 4, 3, 'B87754', 'C', CAST('12-JUL-2020' AS DATE), 'Unlicensed Operation');
+INSERT INTO Citation (Cite_ID, Officer_id, Vehicle_id, Person_id, Incident_id, Cite_num, Cite_type, Cite_Date_time, Cite_Offense) 
+VALUES (Citation_seq.NEXTVAL, 4, 3, 5, 4, 'A80004', 'W', CAST('13-JUL-2020' AS DATE), 'Defective Equipment');
+INSERT INTO Citation (Cite_ID, Officer_id, Vehicle_id, Person_id, Incident_id, Cite_num, Cite_type, Cite_Date_time, Cite_Offense) 
+VALUES (Citation_seq.NEXTVAL, 7, 4, 7, 6, 'A81114', 'F', CAST('13-JUL-2020' AS DATE), 'Stop Sign Violation');
+INSERT INTO Citation (Cite_ID, Officer_id, Vehicle_id, Person_id, Incident_id, Cite_num, Cite_type, Cite_Date_time, Cite_Offense) 
+VALUES (Citation_seq.NEXTVAL, 5, 8, 5, 13, 'B77754', 'C', CAST('17-JUL-2020' AS DATE), 'Unlicensed Operation');
+INSERT INTO Citation (Cite_ID, Officer_id, Vehicle_id, Person_id, Incident_id, Cite_num, Cite_type, Cite_Date_time, Cite_Offense) 
+VALUES (Citation_seq.NEXTVAL, 5, 8, 5, 21, 'B79854', 'C', CAST('17-JUL-2020' AS DATE), 'Unlicensed Operation');
+INSERT INTO Citation (Cite_ID, Officer_id, Vehicle_id, Person_id, Incident_id, Cite_num, Cite_type, Cite_Date_time, Cite_Offense) 
+VALUES (Citation_seq.NEXTVAL, 5, 8, 5, 22, 'B79954', 'C', CAST('17-JUL-2020' AS DATE), 'Unlicensed Operation');
+INSERT INTO Citation (Cite_ID, Officer_id, Vehicle_id, Person_id, Incident_id, Cite_num, Cite_type, Cite_Date_time, Cite_Offense) 
+VALUES (Citation_seq.NEXTVAL, 5, 8, 5, 22, 'B79954', 'C', CAST('17-JUL-2020' AS DATE), 'Unlicensed Operation');
+INSERT INTO Citation (Cite_ID, Officer_id, Vehicle_id, Person_id, Incident_id, Cite_num, Cite_type, Cite_Date_time, Cite_Offense) 
+VALUES (Citation_seq.NEXTVAL, 5, 8, 5, 22, 'B79954', 'C', CAST('17-JUL-2020' AS DATE), 'Unlicensed Operation');
+INSERT INTO Citation (Cite_ID, Officer_id, Vehicle_id, Person_id, Incident_id, Cite_num, Cite_type, Cite_Date_time, Cite_Offense) 
+VALUES (Citation_seq.NEXTVAL, 5, 8, 5, 22, 'B79954', 'C', CAST('17-JUL-2020' AS DATE), 'Unlicensed Operation');
+INSERT INTO Citation (Cite_ID, Officer_id, Vehicle_id, Person_id, Incident_id, Cite_num, Cite_type, Cite_Date_time, Cite_Offense) 
+VALUES (Citation_seq.NEXTVAL, 5, 8, 5, 22, 'B79954', 'C', CAST('17-JUL-2020' AS DATE), 'Unlicensed Operation');
+INSERT INTO Citation (Cite_ID, Officer_id, Vehicle_id, Person_id, Incident_id, Cite_num, Cite_type, Cite_Date_time, Cite_Offense) 
+VALUES (Citation_seq.NEXTVAL, 5, 8, 5, 22, 'B79954', 'C', CAST('17-JUL-2020' AS DATE), 'Unlicensed Operation');
+INSERT INTO Citation (Cite_ID, Officer_id, Vehicle_id, Person_id, Incident_id, Cite_num, Cite_type, Cite_Date_time, Cite_Offense) 
+VALUES (Citation_seq.NEXTVAL, 5, 8, 5, 22, 'B79954', 'C', CAST('17-JUL-2020' AS DATE), 'Unlicensed Operation');
+
+INSERT INTO Cite_warning (cite_id) 
+VALUES (3);
+INSERT INTO Cite_fee (cite_id , cite_amount) 
+VALUES (1, '55');
+INSERT INTO Cite_fee (cite_id , cite_amount) 
+VALUES (4, '100');
+INSERT INTO Cite_criminal (cite_id, Cite_Status)
+VALUES (2, 'Open');
+INSERT INTO Cite_criminal (cite_id, Cite_Status)
+VALUES (5, 'Open');
+INSERT INTO Cite_criminal (cite_id, Cite_Status)
+VALUES (6, 'Open');
+INSERT INTO Cite_criminal (cite_id, Cite_Status)
+VALUES (7, 'Open');
+INSERT INTO Cite_criminal (cite_id, Cite_Status)
+VALUES (8, 'Open');
+INSERT INTO Cite_criminal (cite_id, Cite_Status)
+VALUES (9, 'Open');
+INSERT INTO Cite_criminal (cite_id, Cite_Status)
+VALUES (10, 'Open');
+INSERT INTO Cite_criminal (cite_id, Cite_Status)
+VALUES (11, 'Open');
+INSERT INTO Cite_criminal (cite_id, Cite_Status)
+VALUES (12, 'Open');
+INSERT INTO Cite_criminal (cite_id, Cite_Status)
+VALUES (13, 'Open');
+
+--QUERIES 
+--This Query answers this question:
+--What are the names and addresses of the victims of Domestic Disturance incidents 
+--over the last year and what were their relationships to the offender?
+SELECT Person.per_first_name, person.per_last_name, victim_to_offender 
+AS Victim_Relationship_to_Offender, address.address_number, 
+address.address_street, address.address_town, address.address_state, address.address_zip
+FROM Person
+JOIN Address ON person.address_id = address.address_id
+JOIN Participant ON participant.person_id = person.person_id
+JOIN victim ON participant.participant_id = victim.participant_id
+JOIN Incident ON participant.incident_id = incident.incident_id
+WHERE Inc_Category = 'Domestic Disturbance' AND Is_Victim_flag = 'Y'; 
+
+--This Query answers this question:
+--In the past year, who were the defendants in criminal cases that were a result of a motor vehicle stop, what were the citation numbers and the case status?
+SELECT Person.per_first_name, person.per_last_name, person.per_oln, cite_num, cite_status
+FROM PERSON
+JOIN Citation ON citation.person_id = person.person_id
+JOIN Incident ON incident.incident_id = citation.incident_id
+JOIN Cite_criminal ON citation.cite_id = cite_criminal.cite_id
+WHERE Inc_Category = 'M/V Stop' AND Inc_Date_Time > CAST('31-DEC-2019' AS DATE) AND Inc_Date_Time < CAST('1-JAN-2021' AS DATE);
+
+
+--This Query answers the question:
+--How many arrests were made in 2020 that occured as a result of Domestic Disturbance incidents?
+SELECT COUNT(Offender_Arrested) AS Domestic_Disturbance_Arrests_In_2020
+FROM Offender
+JOIN Participant ON participant.participant_id = offender.participant_id
+Join Incident ON Incident.Incident_id = participant.incident_id
+WHERE Inc_Category = 'Domestic Disturbance' AND offender_arrest_date > CAST('31-DEC-2019' AS DATE) 
+AND offender_arrest_date < CAST('1-JAN-2021' AS DATE) AND  Offender_arrested = 'Y';
+
+
+--How many arrests by date were made in July of 2020?
+SELECT Inc_Date_Time AS Arrest_Date, COUNT(Offender_Arrested) AS Number_of_Arrests
+FROM Offender
+JOIN Participant ON participant.participant_id = offender.participant_id
+Join Incident ON Incident.Incident_id = participant.incident_id
+WHERE offender_arrest_date > CAST('30-JUN-2020' AS DATE) 
+AND offender_arrest_date < CAST('1-AUG-2020' AS DATE) AND Offender_arrested = 'Y'
+GROUP BY Inc_Date_time, Offender_Arrested
+ORDER BY Inc_Date_time;
+
+SELECT * 
+FROM Cite_Criminal;
+
+
+Update Cite_Criminal
+SET cite_status = 'Trial'
+WHERE Cite_id = 2;
+Update Cite_Criminal
+SET cite_status = 'Trial'
+WHERE Cite_id = 6;
+Update Cite_Criminal
+SET cite_status = 'Trial'
+WHERE Cite_id = 5;
+Update Cite_Criminal
+SET cite_status = 'Trial'
+WHERE Cite_id = 7;
+Update Cite_Criminal
+SET cite_status = 'Trial'
+WHERE Cite_id = 8;
+Update Cite_Criminal
+SET cite_status = 'Trial'
+WHERE Cite_id = 9;
+Update Cite_Criminal
+SET cite_status = 'Trial'
+WHERE Cite_id = 10;
+Update Cite_Criminal
+SET cite_status = 'Trial'
+WHERE Cite_id = 11;
+Update Cite_Criminal
+SET cite_status = 'Trial'
+WHERE Cite_id = 12;
+Update Cite_Criminal
+SET cite_status = 'Trial'
+WHERE Cite_id = 13;
+
+Update Status_Change
+SET change_date = CAST('1-JUL-2020' AS DATE)
+WHERE Cite_id = 2 AND New_Status = 'Trail';
+Update Status_Change
+SET change_date = CAST('1-JUL-2020' AS DATE)
+WHERE Cite_id = 5 AND New_Status = 'Trial';
+Update Status_Change
+SET change_date = CAST('1-JUL-2020' AS DATE)
+WHERE Cite_id = 6 AND New_Status = 'Trial';
+Update Status_Change
+SET change_date = CAST('1-JUL-2020' AS DATE)
+WHERE Cite_id = 7 AND New_Status = 'Trial';
+
+SELECT *
+FROM Status_Change;
